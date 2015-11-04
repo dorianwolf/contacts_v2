@@ -1,17 +1,20 @@
 require 'pg'
+require 'pry'
+require_relative 'number'
 
 class Contact
 
-  attr_accessor :first_name, :last_name, :email, :id
+  attr_accessor :first_name, :last_name, :email, :id, :numbers
 
   @@contacts_list = []
 
 
-  def initialize(first_name, last_name, email, id = nil)
+  def initialize(first_name, last_name, email, id = nil, numbers = [])
     @first_name = first_name
     @last_name = last_name
     @email = email
     @id = id
+    @numbers = numbers
   end
 
   def save
@@ -23,6 +26,11 @@ class Contact
       result = self.class.connection.exec_params(sql, [@first_name, @last_name, @email])
       @id = result[0]['id'].to_i
     end
+  end
+
+  def add_number(type, num)
+    number = Number.create(@id, type, num)
+    @numbers << number
   end
 
   def destroy
@@ -44,6 +52,7 @@ class Contact
       contact = Contact.new(first_name, last_name, email)
       contact.save
       @@contacts_list << contact
+      contact
     end
 
     def find(id)
@@ -58,10 +67,10 @@ class Contact
       outputs = []
       if result
         result.each do |contact|
-          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'])
+          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'], contact['id'].to_i)
         end
       end
-      outputs
+      outputs[0]
     end
 
     def find_all_by_firstname(name)
@@ -69,10 +78,10 @@ class Contact
       outputs = []
       if result
         result.each do |contact|
-          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'])
+          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'], contact['id'].to_i)
         end
       end
-      outputs
+      outputs[0]
     end
 
     def find_by_email(email)
@@ -80,10 +89,22 @@ class Contact
       outputs = []
       if result
         result.each do |contact|
-          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'])
+          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'], contact['id'].to_i)
         end
       end
       outputs
+    end
+
+    def find_by_number(number)
+      id = Number.find_by_number(number)
+      result = connection.exec_params('SELECT * FROM contacts WHERE id = $1', [id])
+      outputs = []
+      if result
+        result.each do |contact|
+          outputs << Contact.new(contact['firstname'], contact['lastname'], contact['email'], contact['id'].to_i)
+        end
+      end
+      outputs[0]
     end
 
     def show_list
