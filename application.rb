@@ -10,12 +10,14 @@ class Application
       case input
       when "create"
         Application.create
+        Application.begin
       when "find"
         Application.read
-      when "update"
-        Application.save
+        Application.begin
       when "delete"
-      when "nothing"
+        Application.delete
+        Application.begin
+      when "quit"
         puts "fine.."
       else 
         puts "huh?"
@@ -31,7 +33,7 @@ class Application
       last_name = gets.chomp
       puts "What's the email?"
       email = gets.chomp
-      contact = Contact.create(first_name, last_name, email)
+      contact = Contact.create(firstname: first_name, lastname: last_name, email: email)
       id = contact.id
       Application.create_number(id)
     end
@@ -54,15 +56,30 @@ class Application
       end
     end
 
-    def read(id)
-
-    end
-
-    def update
+    def read
+      puts "What attribute are you going to give me?"
+      search = gets.chomp.downcase
+      puts "What is it called?"
+      value = gets.chomp
+      case search
+      when "firstname"
+        output = Contact.find_by(firstname: value)
+      when "lastname"
+        output = Contact.find_by(lastname: value)
+      when "email"
+        output = Contact.find_by(email: value)
+      else
+        puts "I didn't understand. Try again."
+        Application.read
+      end
+      puts output.inspect
     end
 
     def delete
-      puts ""
+      puts "What contact ID?"
+      id = gets.chomp.to_i
+      Contact.find(id).destroy
+      puts "DELETED"
     end
 
   end
@@ -70,3 +87,4 @@ class Application
 end
 
 Application.begin
+
